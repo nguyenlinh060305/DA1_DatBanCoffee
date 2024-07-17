@@ -7,10 +7,10 @@ package view;
 import java.util.List;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.table.DefaultTableModel;
-import model.BanHang_Ban;
-import model.BanHang_ThucDon;
-import repo.BanHang_BanRepo;
-import repo.BanHang_ThucDonRepo;
+import repo.BanHangRepo;
+import model.BanHang;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  *
@@ -21,9 +21,7 @@ public class main extends javax.swing.JFrame {
     /**
      * Creates new form main
      */
-    BanHang_BanRepo bhbrp = new BanHang_BanRepo();
-    BanHang_ThucDonRepo bhtdrp = new BanHang_ThucDonRepo();
-    int index = -1;
+    BanHangRepo bhrp = new BanHangRepo();
 
     public main() {
         initComponents();
@@ -36,12 +34,15 @@ public class main extends javax.swing.JFrame {
         fillComboBoxLoaiHang();
     }
 
+    Map<String, String> banMap = new HashMap<>();
+
     void fillTableBan() {
         DefaultTableModel model = (DefaultTableModel) tblBan.getModel();
         model.setRowCount(0);
         try {
-            List<BanHang_Ban> list = bhbrp.select();
-            for (BanHang_Ban bh : list) {
+            List<BanHang> list = bhrp.selectBan();
+            for (BanHang bh : list) {
+                banMap.put(bh.getTenBan(), bh.getMaBan());
                 Object[] row = {
                     bh.getViTri(),
                     bh.getTenBan(),
@@ -58,8 +59,8 @@ public class main extends javax.swing.JFrame {
         DefaultComboBoxModel model = (DefaultComboBoxModel) cboLoaiHang.getModel();
         model.removeAllElements();
         try {
-            List<BanHang_ThucDon> list = bhtdrp.selectLH();
-            for (BanHang_ThucDon bh : list) {
+            List<BanHang> list = bhrp.selectLH();
+            for (BanHang bh : list) {
                 model.addElement(bh);
             }
             fillTableMenu();
@@ -72,10 +73,10 @@ public class main extends javax.swing.JFrame {
         DefaultTableModel model = (DefaultTableModel) tblMenu.getModel();
         model.setRowCount(0);
         try {
-            BanHang_ThucDon bh = (BanHang_ThucDon) cboLoaiHang.getSelectedItem();
+            BanHang bh = (BanHang) cboLoaiHang.getSelectedItem();
             if (bh != null) {
-                List<BanHang_ThucDon> list = bhtdrp.selectByLH(bh.getTenLoaiHang());
-                for (BanHang_ThucDon item : list) {
+                List<BanHang> list = bhrp.selectByLH(bh.getTenLoaiHang());
+                for (BanHang item : list) {
                     Object[] row = {
                         item.getTenHangHoa(),
                         item.getGiaSp()
@@ -85,6 +86,25 @@ public class main extends javax.swing.JFrame {
             }
         } catch (Exception e) {
             System.out.println(e);
+        }
+    }
+
+    private void fillTableOrder(String maBan) {
+        DefaultTableModel model = (DefaultTableModel) tblOrder.getModel();
+        model.setRowCount(0);
+        try {
+            List<BanHang> list = bhrp.selectByBan(maBan);
+            for (BanHang bh : list) {
+                Object[] row = {
+                    bh.getTenHang(),
+                    bh.getGia(),
+                    bh.getSoLuong(),
+                    bh.getThanhTien()
+                };
+                model.addRow(row);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -146,7 +166,7 @@ public class main extends javax.swing.JFrame {
         jLabel13 = new javax.swing.JLabel();
         cboLoaiHang = new javax.swing.JComboBox<>();
         jLabel17 = new javax.swing.JLabel();
-        jTextField1 = new javax.swing.JTextField();
+        txtTenHangHoa = new javax.swing.JTextField();
         jPanel22 = new javax.swing.JPanel();
         jLabel16 = new javax.swing.JLabel();
         jScrollPane6 = new javax.swing.JScrollPane();
@@ -156,7 +176,7 @@ public class main extends javax.swing.JFrame {
         jTextPane2 = new javax.swing.JTextPane();
         jButton1 = new javax.swing.JButton();
         jScrollPane3 = new javax.swing.JScrollPane();
-        jTable3 = new javax.swing.JTable();
+        tblOrder = new javax.swing.JTable();
 
         javax.swing.GroupLayout jPanel9Layout = new javax.swing.GroupLayout(jPanel9);
         jPanel9.setLayout(jPanel9Layout);
@@ -237,9 +257,9 @@ public class main extends javax.swing.JFrame {
         jPanel10Layout.setVerticalGroup(
             jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel10Layout.createSequentialGroup()
-                .addGap(20, 20, 20)
+                .addGap(15, 15, 15)
                 .addComponent(jLabel8)
-                .addContainerGap(10, Short.MAX_VALUE))
+                .addContainerGap(15, Short.MAX_VALUE))
         );
 
         jPanel11.setBackground(new java.awt.Color(153, 180, 155));
@@ -463,6 +483,11 @@ public class main extends javax.swing.JFrame {
                 return canEdit [columnIndex];
             }
         });
+        tblBan.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tblBanMouseClicked(evt);
+            }
+        });
         jScrollPane2.setViewportView(tblBan);
 
         javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
@@ -576,6 +601,11 @@ public class main extends javax.swing.JFrame {
                 return canEdit [columnIndex];
             }
         });
+        tblMenu.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                tblMenuMouseClicked(evt);
+            }
+        });
         jScrollPane1.setViewportView(tblMenu);
 
         jLabel12.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
@@ -592,6 +622,13 @@ public class main extends javax.swing.JFrame {
 
         jLabel17.setText("Tên hàng hóa");
 
+        txtTenHangHoa.setEditable(false);
+        txtTenHangHoa.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtTenHangHoaActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -606,7 +643,7 @@ public class main extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(cboLoaiHang, 0, 132, Short.MAX_VALUE)
-                    .addComponent(jTextField1))
+                    .addComponent(txtTenHangHoa))
                 .addContainerGap())
             .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
         );
@@ -620,7 +657,7 @@ public class main extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel17)
-                    .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(txtTenHangHoa, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
         );
@@ -642,12 +679,12 @@ public class main extends javax.swing.JFrame {
         jButton1.setForeground(new java.awt.Color(255, 255, 255));
         jButton1.setText("XÓA MÓN");
 
-        jTable3.setModel(new javax.swing.table.DefaultTableModel(
+        tblOrder.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
             },
             new String [] {
-                "", "Tên hàng ", "Số lượng", "Thành tiền"
+                "Tên hàng", "Giá", "Số lượng", "Thành tiền"
             }
         ) {
             boolean[] canEdit = new boolean [] {
@@ -658,7 +695,7 @@ public class main extends javax.swing.JFrame {
                 return canEdit [columnIndex];
             }
         });
-        jScrollPane3.setViewportView(jTable3);
+        jScrollPane3.setViewportView(tblOrder);
 
         javax.swing.GroupLayout jPanel22Layout = new javax.swing.GroupLayout(jPanel22);
         jPanel22.setLayout(jPanel22Layout);
@@ -677,7 +714,7 @@ public class main extends javax.swing.JFrame {
                         .addComponent(jScrollPane6, javax.swing.GroupLayout.PREFERRED_SIZE, 90, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addGap(18, 18, 18)
                 .addComponent(jButton1)
-                .addContainerGap(82, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
         );
         jPanel22Layout.setVerticalGroup(
@@ -723,7 +760,7 @@ public class main extends javax.swing.JFrame {
                     .addGroup(jPanel6Layout.createSequentialGroup()
                         .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jPanel22, javax.swing.GroupLayout.DEFAULT_SIZE, 365, Short.MAX_VALUE)))
+                        .addComponent(jPanel22, javax.swing.GroupLayout.DEFAULT_SIZE, 358, Short.MAX_VALUE)))
                 .addGap(20, 20, 20))
         );
         jPanel6Layout.setVerticalGroup(
@@ -744,9 +781,9 @@ public class main extends javax.swing.JFrame {
                                     .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                         .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)))))
-                        .addGap(46, 46, 46)
+                        .addGap(39, 39, 39)
                         .addGroup(jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jPanel22, javax.swing.GroupLayout.DEFAULT_SIZE, 363, Short.MAX_VALUE)
+                            .addComponent(jPanel22, javax.swing.GroupLayout.DEFAULT_SIZE, 375, Short.MAX_VALUE)
                             .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
@@ -781,7 +818,9 @@ public class main extends javax.swing.JFrame {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 96, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -807,6 +846,66 @@ public class main extends javax.swing.JFrame {
         // TODO add your handling code here:
         fillTableMenu();
     }//GEN-LAST:event_cboLoaiHangActionPerformed
+
+    private void txtTenHangHoaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtTenHangHoaActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtTenHangHoaActionPerformed
+
+    private void tblMenuMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblMenuMouseClicked
+
+        int selectedRow = tblMenu.getSelectedRow();
+        if (selectedRow != -1) {
+            String tenHangHoa = (String) tblMenu.getValueAt(selectedRow, 0);
+            txtTenHangHoa.setText(tenHangHoa);
+
+        }
+        if (selectedRow != -1) {
+            String tenHangHoa = (String) tblMenu.getValueAt(selectedRow, 0); // Lấy tên hàng hóa từ cột 0 (tên hàng hóa)
+            int giaSp = (int) tblMenu.getValueAt(selectedRow, 1); // Lấy giá sản phẩm từ cột 1 (giá sản phẩm)
+
+            // Kiểm tra xem món hàng đã có trong tblOrder chưa
+            DefaultTableModel orderModel = (DefaultTableModel) tblOrder.getModel();
+            boolean found = false;
+            for (int i = 0; i < orderModel.getRowCount(); i++) {
+                String orderTenHangHoa = (String) orderModel.getValueAt(i, 0);
+                if (orderTenHangHoa.equals(tenHangHoa)) {
+                    // Nếu đã có, tăng số lượng và cập nhật thành tiền
+                    int soLuongHienTai = (int) orderModel.getValueAt(i, 2);
+                    int thanhTien = (int) orderModel.getValueAt(i, 3);
+
+                    soLuongHienTai++;
+                    thanhTien = soLuongHienTai * giaSp;
+
+                    orderModel.setValueAt(soLuongHienTai, i, 2); // Cập nhật số lượng
+                    orderModel.setValueAt(thanhTien, i, 3); // Cập nhật thành tiền
+
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                // Nếu chưa có, thêm một hàng mới vào tblOrder
+                Object[] row = {
+                    tenHangHoa,
+                    giaSp,
+                    1, // Số lượng ban đầu là 1
+                    giaSp // Thành tiền ban đầu bằng giá sản phẩm
+                };
+                orderModel.addRow(row);
+            }
+        }
+    }//GEN-LAST:event_tblMenuMouseClicked
+
+    private void tblBanMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblBanMouseClicked
+        // TODO add your handling code here:
+        int selectedRow = tblBan.getSelectedRow();
+        if (selectedRow != -1) {
+            String tenBan = (String) tblBan.getValueAt(selectedRow, 1);
+            String maBan = banMap.get(tenBan);
+            fillTableOrder(maBan);
+        }
+    }//GEN-LAST:event_tblBanMouseClicked
 
     /**
      * @param args the command line arguments
@@ -853,8 +952,6 @@ public class main extends javax.swing.JFrame {
     private javax.swing.JButton jButton6;
     private javax.swing.JEditorPane jEditorPane1;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel10;
-    private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel14;
@@ -865,15 +962,6 @@ public class main extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel19;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel20;
-    private javax.swing.JLabel jLabel21;
-    private javax.swing.JLabel jLabel22;
-    private javax.swing.JLabel jLabel23;
-    private javax.swing.JLabel jLabel24;
-    private javax.swing.JLabel jLabel25;
-    private javax.swing.JLabel jLabel26;
-    private javax.swing.JLabel jLabel27;
-    private javax.swing.JLabel jLabel28;
-    private javax.swing.JLabel jLabel29;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel30;
     private javax.swing.JLabel jLabel31;
@@ -886,11 +974,8 @@ public class main extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel8;
-    private javax.swing.JLabel jLabel9;
-    private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel10;
     private javax.swing.JPanel jPanel11;
-    private javax.swing.JPanel jPanel12;
     private javax.swing.JPanel jPanel14;
     private javax.swing.JPanel jPanel15;
     private javax.swing.JPanel jPanel16;
@@ -902,10 +987,8 @@ public class main extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel22;
     private javax.swing.JPanel jPanel23;
     private javax.swing.JPanel jPanel3;
-    private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
     private javax.swing.JPanel jPanel6;
-    private javax.swing.JPanel jPanel7;
     private javax.swing.JPanel jPanel8;
     private javax.swing.JPanel jPanel9;
     private javax.swing.JScrollPane jScrollPane1;
@@ -914,15 +997,11 @@ public class main extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane6;
     private javax.swing.JScrollPane jScrollPane7;
     private javax.swing.JScrollPane jScrollPane8;
-    private javax.swing.JTable jTable3;
-    private javax.swing.JTextField jTextField1;
     private javax.swing.JTextPane jTextPane1;
     private javax.swing.JTextPane jTextPane2;
-    private javax.swing.JPanel panelBanHang;
-    private javax.swing.JPanel panelBanHang1;
-    private javax.swing.JPanel panelBanHang2;
-    private javax.swing.JPanel panelBanHang3;
     private javax.swing.JTable tblBan;
     private javax.swing.JTable tblMenu;
+    private javax.swing.JTable tblOrder;
+    private javax.swing.JTextField txtTenHangHoa;
     // End of variables declaration//GEN-END:variables
 }

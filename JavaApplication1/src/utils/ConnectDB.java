@@ -15,7 +15,7 @@ public class ConnectDB {
     private static String driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
     private static String dburl = "jdbc:sqlserver://localhost:1433;databaseName=QuanLyCafe;encrypt=true;trustServerCertificate=true;";
     private static String username = "sa";
-    private static String password = "sang2005";
+    private static String password = "Password.1";
 
     //Nạp driver
     static {
