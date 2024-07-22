@@ -4,6 +4,8 @@
  */
 package model;
 
+import java.util.Date;
+
 /**
  *
  * @author hoangminhsang
@@ -21,6 +23,26 @@ public class BanHang {
     private int gia;
     private int soLuong;
     private double thanhTien;
+    private Date ngayHDBH;
+    private int maHD;
+
+    public int getMaHD() {
+        return maHD;
+    }
+
+    public void setMaHD(int maHD) {
+        this.maHD = maHD;
+    }
+    
+
+    public Date getNgayHDBH() {
+        return ngayHDBH;
+    }
+
+    public void setNgayHDBH(Date ngayHDBH) {
+        this.ngayHDBH = ngayHDBH;
+    }
+    
 
     public BanHang() {
     }
